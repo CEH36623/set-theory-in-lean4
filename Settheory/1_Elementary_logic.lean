@@ -1,26 +1,5 @@
 variable (p q r s : Prop)
 namespace mysettheory
-#check And.intro
-#check And.left
-#check And.right
-#check Or.intro_left --or  {a : Prop} (b : Prop) (h : a) : a ∨ b =
-#check Or.intro_right -- (b : Prop) → a → a ∨ b
-#check Or.inl --or {a b : Prop} (h : a) : a ∨ b =  a → a ∨ b
-#check Or.inr --
-#check Or.elim -- a ∨ b → (a → c) → (b → c) → c
-#check ¬p -- p → False
-#check False.elim -- False : False → ()
---{C : Sort u} → False → C
--- {C : Sort u}
-#check absurd --  a → ¬a → b
-#check True.intro --
-#check Iff.intro --(a → b) → (b → a) → (a ↔ b)
-#check Iff.mp -- a ↔ b → a → b
-#check Iff.mpr -- a ↔ b → b → a
-
--- #check em p
--- byContradiction
-
 
 --Theorem 1
 -- (a) Law of addition (Add.)
