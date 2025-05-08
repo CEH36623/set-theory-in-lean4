@@ -1,5 +1,6 @@
 variable (p q r s : Prop)
-
+--1. 양화사 하기.
+--2. tactic 정리하면서 증명 다시
 --Conjuction
 #check And.intro
 #check And.left
@@ -33,7 +34,7 @@ variable (p q r s : Prop)
 open Classical
 #check em p -- 배중률
 -- byContradiction : 귀류법
--- 부정을 하고 그것으로 c : False(모순)을 보이면 됨.
+-- input(부정할 명제 : ¬p) => false → p 명제가 튀어나옴, 보통 have로 잡지
 
 
 ---------------------------------------------------

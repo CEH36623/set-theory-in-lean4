@@ -241,9 +241,8 @@ example (a : α) : (∃ x, p x → b) ↔ (∀ x, p x) → b :=
       --have h₁ : (x : α) → p x → b :=
       Or.elim (em b)
       (fun hb : b =>
-        ⟨a, fun hpa : p a => hb⟩ -- 임의의 참값 a를 넣음면 됨.
-
-        -- 1.
+        ⟨a, fun _ => hb⟩ -- 임의의 참값 a를 넣음면 됨.
+      --fun hpa : p a 과 동일, 안 쓰면 세모 뜨니까.
       )
 
       (fun hnb : ¬b =>
@@ -349,4 +348,10 @@ variable (shaves : men → men → Prop)
 example (h : ∀ x : men, shaves barber x ↔ ¬ shaves x x) : False :=
   have h₁ :shaves barber barber →  ¬ shaves barber barber := Iff.mp (h barber)
   have h₂ :¬ shaves barber barber → shaves barber barber := Iff.mpr (h barber)
-  sorry
+  False.elim (
+    Or.elim (em (shaves barber barber))
+    (fun hs : shaves barber barber =>
+      False.elim ((h₁ hs) hs))
+    (fun hns : ¬ shaves barber barber =>
+      False.elim (hns (h₂ hns)))
+      )
