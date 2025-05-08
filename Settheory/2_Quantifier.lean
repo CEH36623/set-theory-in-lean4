@@ -3,24 +3,89 @@ open Classical
 variable (α : Type) (p q : α → Prop)
 variable (b : Prop) (w : α)
 
-#check Eq.refl
-#check Eq.refl _
-#check rfl
-#check Eq.symm
-#check Eq.trans
-#check Eq.subst
-#check congrArg
-#check congrFun
-#check congr
+---------------------------------------------------
+
+#check (∀ x :  α, p x ∧ q x) -- 명제
+#check fun x : α => p x ∧ q x -- 명제를 구성하는 함수
+--위 명제는 아래와 같은 함수로 대응 될 수 있다.
+
+#check(∃ x : α, p x ∧ q x)
+#check Exists (fun x : α => p x ∧ q x)
+#check Exists
+--전자는 후자로 desugar됨
+-- ∀은 핵심 논리문법 -> ∃는 inductive type으로 만든 것.
+
 #check Exists.intro
 #check Exists.elim
 
+---------------------------------------------------
+-- ∀ Introduction
+example : ∀ x : ℕ, x = x :=
+  fun x => rfl
+-- 함수를 만들면 됨
 
+-- ∀ Elimination
+example (h : ∀ x : α, p x) (a : α) : p a :=
+  h a
+-- h : (x : α) -> p x이므로
+-- p a 나옴
+
+---------------------------------------------------
+
+-- ∃ Introduction
+-- (∃에 종속될 항) (그 항을 포함한 명제)
+-- 종속변수 x도 들어갈 수 있다.
+example (x : Nat) (h : x > 0) : ∃ y, y < x :=
+  Exists.intro 0 h
+-- h에서 0을 y로 intro
+example (x : Nat) (h : x > 0) : ∃ y, y < x :=
+  ⟨0, h⟩
+
+-- ∃ Elimination
+-- exists.elim의 형식
+-- ∃ x, p x
+-- ∀ x, p x → (b : prop)
+-----------------------
+-- b
+example (h : ∃ x, p x ∧ q x) : ∃ x, q x ∧ p x :=
+  Exists.elim h
+  (fun w : α  =>
+  fun hw : p w ∧ q w =>
+    have hw₂ : q w ∧ p w :=
+      ⟨hw.right, hw.left⟩
+    Exists.intro w hw₂
+  )
+
+-- ∃ intro 축약형 notation
+example (h : ∃ x, p x ∧ q x) : ∃ x, q x ∧ p x :=
+  Exists.elim h
+  (fun w =>
+  fun hw : p w ∧ q w =>
+  show ∃ x, q x ∧ p x from ⟨w, hw.right, hw.left⟩)
+
+-- match를 사용해서 축약 ()
+example (h : ∃ x, p x ∧ q x) : ∃ x, q x ∧ p x :=
+  match h with -- exists 없앨 명제
+  | ⟨w, hw⟩ => ⟨w, hw.right, hw.left⟩
+
+
+
+-- notations
+-- 1. Exists.intro 0 h
+--   same as ⟨0,h⟩
+-- 2. match h with
+-- fun w => fun hw : p w ∧ q w
+-- same as ⟨w, hw⟩
+-- 나머지는 그대로.
+-- for all 부분 간단하게 작성하기
+
+---------------------------------------------------
 
 example : (∃ x : α, b) → b :=
   fun h : (∃ x : α, b) =>
   Exists.elim h (fun (w : α)  => fun hw : b => hw)
 
+--ver2
 example : (∃ x : α, b) → b :=
   fun h =>
   match h with
@@ -164,7 +229,7 @@ example : (∀ x, p x → b) ↔ (∃ x, p x) → b :=
      fun x => fun hp : p x => h₁ ⟨x, hp⟩
     )
 
-
+-- α의 어떤 임의의 원소
 example (a : α) : (∃ x, p x → b) ↔ (∀ x, p x) → b :=
   Iff.intro
     (fun (h₁ : (∃ x, p x → b)) (h₂ : (∀ x, p x)) =>
@@ -172,11 +237,47 @@ example (a : α) : (∃ x, p x → b) ↔ (∀ x, p x) → b :=
       | ⟨w, hw⟩ =>  hw (h₂ w)
      )
 
-    (fun h : ((x : α) → p x) → b  =>
+    (fun h₁: ((x : α) → p x) → b  =>
       --have h₁ : (x : α) → p x → b :=
+      Or.elim (em b)
+      (fun hb : b =>
+        ⟨a, fun hpa : p a => hb⟩ -- 임의의 참값 a를 넣음면 됨.
 
-      sorry
+        -- 1.
       )
+
+      (fun hnb : ¬b =>
+      -- 2. 도입 안에 식 전개하기.
+
+
+        -- have hnpa : ¬ (∀ x, p x) :=
+        --   byContradiction ( fun (ha : ¬¬ ∀ x, p x) =>
+        --   have h₄ : ∀ x, p x :=
+        --       byContradiction (fun hna : ¬ (∀ x, p x) => False.elim (ha hna) )
+        --   False.elim (hnb (h₁ h₄)))
+          have henp : (∃ x, ¬ p x) :=
+            byContradiction (fun hnp : ¬(∃ x, ¬ p x) =>
+              have  hax : ∀ x, p x :=
+                fun x =>
+                  byContradiction (fun hnpx : ¬ p x =>
+                    have henp₂ : ∃ x, ¬ p x := ⟨x, hnpx⟩
+                    hnp henp₂
+                    )
+              False.elim (hnb (h₁ hax))
+            )
+          have hd : (∃x, ¬b → ¬ p x) :=
+            match henp with
+            | ⟨w, henpw⟩ => ⟨w,(fun hnb₁ : ¬ b => henpw)⟩
+          match hd with
+          | ⟨x, hdx⟩ => ⟨x, fun hpx : p x => have hnpx : ¬p x := hdx hnb; absurd hpx hnpx⟩
+      )
+    )
+      -- have h₂ : ((x : α) → p x) := fun _ => hpx
+      -- 잘못된 이유 : p a가 성립한다고 해서 ∀ x, p x가 성립되는 건 아니다.
+      -- 논리가 잘못됨.
+
+
+
 
 example (a : α) : (∃ x, b → p x) ↔ (b → ∃ x, p x) :=
   Iff.intro
@@ -184,10 +285,20 @@ example (a : α) : (∃ x, b → p x) ↔ (b → ∃ x, p x) :=
       match h₁ with
       | ⟨w, hw⟩ => ⟨w, (hw hb)⟩
     )
-    ( sorry
-    )
+      (fun(h₂ : (b → ∃ x, p x)) =>
+        Or.elim (em b)
+          (fun hb : b =>
+            let hx := h₂ hb
+            match hx with
+            | ⟨x, hxx⟩ => ⟨x,(fun (hbb : b) => hxx)⟩
+            -- b 타입 값 하나 받아야 하는데 이미 hb 있으니까 hbb로 안 받고
+            -- fun _로 가도 됨.
+          )
+          (fun hnb : ¬b =>
+            ⟨a, fun h => (hnb h).elim⟩
+          )
 
-
+      )
 
 example : (∀ x, p x ∧ q x) ↔ (∀ x, p x) ∧ (∀ x, q x) :=
   Iff.intro
